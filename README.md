@@ -1,4 +1,4 @@
-# twitter_collector
+# Twitter Collector
 Twitter Collector is a tool that help collecting twitter data, storing it in JSON file, indexing it by using Solr and index the already stored text tweets into Solr.
 
 
@@ -18,7 +18,5 @@ Twitter Collector is a tool that help collecting twitter data, storing it in JSO
             5. get_timelines streaming the tweets that any of the screen name mentioned in.
 
         3. -tf is the parameter in which where do we expect to find the terms. Example: "../.config/terms"
-
-
-
-is the file where the terms you are intersted to collect.
+        
+        
