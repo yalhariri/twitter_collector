@@ -5,8 +5,8 @@ Twitter Collector is a tool that help collecting twitter data, storing it in JSO
 
 
           
-# To run the streamer #:
-## python twitter_streamer.py -c ../.config/keys -cmd stream_terms -tf ../.config/terms ##
+# To run the streamer :
+## python twitter_streamer.py -c ../.config/keys -cmd stream_terms -tf ../.config/terms
 
 
         1. -c is the parameter in which where do we expect to find the keys. Example: "../.config/keys" is the file where Twitter API keys exist.
