@@ -1,13 +1,13 @@
-1. # Twitter Collector
+# 1. Twitter Collector
 Twitter Collector is a tool that help collecting twitter data, storing it in JSON file, indexing it by using Solr and index the already stored text tweets into Solr.
 
 
-2. # Twitter Streamer
+# 2. Twitter Streamer
 Twitter streamer is a tool that help collecting twitter data, storing it in JSON file, and if required, indexing it by using Solr and index the already stored text tweets into Solr.
 
 
           
-a. # To run the streamer :
+# a.  To run the streamer :
 ## python twitter_streamer.py -c ../.config/keys -cmd stream_terms -tf ../.config/terms
 
 
