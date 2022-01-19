@@ -1,0 +1,7 @@
+twython>=3.6.0
+pysolr
+subprocess
+requests
+nltk
+urllib
+json
