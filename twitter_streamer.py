@@ -279,7 +279,7 @@ if __name__== "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', help="config.json that contains twitter api keys;")
-    parser.add_argument('-cmd','--command', help="commands: search, stream_terms, stream_accounts, get_timeline")
+    parser.add_argument('-cmd','--command', help="commands: search, terms, stream_accounts, get_timeline")
     parser.add_argument('-tf','--terms_file', help="terms list to seach for")
     parser.add_argument('-sf','--selected_fields', help="Write all tweet object or selected fields only", default=False)
     parser.add_argument('-lf','--lang_file', help="language list split with newline", default=None)
@@ -329,7 +329,7 @@ if __name__== "__main__":
                         filter_by_terms(config, args.url, args.uname, args.password, args.terms_file, args.selected_fields, key_turn=key_turn)
                     elif (args.command == 'lang_terms'):
                         filter_by_language(config, args.url, args.uname, args.password, args.terms_file, args.lang_file, args.selected_fields, key_turn=key_turn)
-                    elif (args.command == 'users'):
+                    elif (args.command == 'users_screen_name'):
                         filter_by_screen_names(config, args.url, args.uname, args.password, args.terms_file, args.selected_fields, key_turn=key_turn)
                     elif (args.command == 'search'):
                         collect_tweets_by_search_terms(config, args.url, args.uname, args.password, args.terms_file, args.selected_fields, key_turn=key_turn)
