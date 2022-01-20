@@ -24,8 +24,8 @@ python twitter_streamer.py -c ../.config/keys -cmd stream_terms -tf ../.config/t
         3. search to look for tweets that has a specific list of term(s)
         4. get_friends look for users followers and friends.
         5. get_timelines streaming the tweets that any of the screen name mentioned in.
-
-        3. -tf is the parameter in which where do we expect to find the terms. 
-            Example: "../.config/terms"
+    
+    3. -tf is the parameter in which where do we expect to find the terms. 
+        Example: "../.config/terms"
     
     

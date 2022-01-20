@@ -16,11 +16,11 @@ from twitter_classes import TwitterCrawler
 from util import *
 
 WAIT_TIME = 30
-log_folder = './.log/'
-config_folder = './.config/'
+log_folder = '../.log/'
+config_folder = '../.config/'
 streamer_log=log_folder+'streamer'
 crawler_log=log_folder+'crawler'
-cache_folder="./.cache/"
+cache_folder="../.cache/"
 status_file = cache_folder+"status"
 
 if not os.path.isdir(log_folder):
@@ -173,8 +173,8 @@ def get_friends(config, url, uname, password, screen_name_config_filepath=None, 
     api_keys = list(config['apikeys'].values())[key_turn]
     call = '/friends/list'
     screen_name_config = {}
-    print('screen_name_config_filepath:',os.path.abspath('./.config/'+screen_name_config_filepath))
-    with open(os.path.abspath('./.config/'+screen_name_config_filepath), 'r') as screen_name_config_rf:
+    print('screen_name_config_filepath:',os.path.abspath(config_folder+screen_name_config_filepath))
+    with open(os.path.abspath(config_folder+screen_name_config_filepath), 'r') as screen_name_config_rf:
         screen_name_config = json.load(screen_name_config_rf)
     
     all_items = len(screen_name_config['users'])
@@ -196,7 +196,7 @@ def get_friends(config, url, uname, password, screen_name_config_filepath=None, 
 
         screen_name_config['current_ix'] = current_ix
         
-        with open(os.path.abspath('./.config/'+screen_name_config_filepath), 'w') as screen_name_config_rf:
+        with open(os.path.abspath(config_folder+screen_name_config_filepath), 'w') as screen_name_config_rf:
             json.dump(screen_name_config, screen_name_config_rf,ensure_ascii=False)
 
         update_log(crawler_log,str('COMPLETED -> (current_ix: [%s/%d])'%(current_ix, total)))
@@ -255,7 +255,7 @@ if __name__== "__main__":
     import random
     config = load_api_keys(keys=args.config, index = random.randint(0,9)%2)
     file_name_output = args.command
-    #print(args.url, '\t', config)
+    print(args.url, '\t', config)
     if len(config)>0:
         kRun = read_running_status(status_file)
         if not kRun:
@@ -265,6 +265,7 @@ if __name__== "__main__":
             print('Another process is running... exitting')
             kRun = 0
         try:
+            print('Starting' , str(kRun))
             while(kRun):
                 try:
                     key_turn=(key_turn+1)%len(config['apikeys'])
