@@ -424,7 +424,7 @@ class TwitterStreamer(twython.TwythonStreamer):
         self.check_running()
 
             
-    def on_error(self, status_code, data):
+    def on_error(self, status_code, data,**args):
         logger.warning(str('ERROR CODE: [%s]-[%s]'%(status_code, data)))
         print(str('ERROR CODE: [%s]-[%s]'%(status_code, data)))
         self.check_running()

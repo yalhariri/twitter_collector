@@ -11,7 +11,6 @@ import re
 import nltk
 import requests
 tokenizer = nltk.TweetTokenizer()
-import subprocess
 import urllib.parse
 from urllib.parse import urlparse
 import os

@@ -21,7 +21,7 @@ config_folder = '../.config/'
 streamer_log=log_folder+'streamer'
 crawler_log=log_folder+'crawler'
 cache_folder="../.cache/"
-status_file = cache_folder+"status"
+status_file = cache_folder+"status_crawler"
 
 if not os.path.isdir(log_folder):
     os.mkdir(log_folder)
@@ -270,7 +270,7 @@ if __name__== "__main__":
                 try:
                     key_turn=(key_turn+1)%len(config['apikeys'])
                     kRun = read_running_status(status_file)
-                    if (args.command == 'search'):
+                    if (args.command == 'terms'):
                         collect_tweets_by_search_terms(config, args.url, args.uname, args.password, args.terms_file, args.selected_fields, key_turn=key_turn, file_name_output=file_name_output)
                     elif (args.command == 'get_friends'):
                         get_friends(config, args.url, args.uname, args.password, screen_name_config_filepath=args.terms_file, selected_fields = args.selected_fields, key_turn=key_turn)
