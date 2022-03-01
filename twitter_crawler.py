@@ -6,6 +6,14 @@ Created on Sat Jan 11 00:00:00 2020
 
 """
 
+import logging
+import logging.handlers
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, format='(%(asctime)s) [%(process)d] %(levelname)s: %(message)s')
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 
 import sys
 import os
@@ -191,7 +199,7 @@ def get_friends(config, url, uname, password, screen_name_config_filepath=None, 
             current_ix += 1 # one at a time... no choice
         except Exception as exc:
             update_log(crawler_log,str(exc))
-            update_log(crawler_log,str(util.full_stack()))
+            #update_log(crawler_log,str(util.full_stack()))
             pass    
 
         screen_name_config['current_ix'] = current_ix
@@ -206,7 +214,71 @@ def get_friends(config, url, uname, password, screen_name_config_filepath=None, 
             update_log(crawler_log,str('[%s] ALL COMPLETED'%(call)))
             return 0
 
+def collect_tweets_by_ids(config, url, uname, password, ids_file, selected_fields = False, key_turn=0):
+    print('here')
+    if ids_file == None:
+        print('Please include the ids file!\nCrawler ended...')
+        return
+        
+    api_keys = list(config['apikeys'].values())[key_turn]
+    app_key = api_keys['app_key']
+    app_secret = api_keys['app_secret']
+    oauth_token = api_keys['oauth_token']
+    oauth_token_secret = api_keys['oauth_token_secret']
+    
+    #print("api_keys" + str(api_keys))
+    if len(api_keys) > 0:
+    
+        tweet_ids_config = {}
+        with open(os.path.abspath(ids_file), 'r') as tweet_ids_config_rf:
+            tweet_ids_config = json.load(tweet_ids_config_rf)
 
+        max_range = 100
+        
+        current_ix = tweet_ids_config['current_ix'] if ('current_ix' in tweet_ids_config) else 0
+        if 'tweet_ids' not in tweet_ids_config.keys():
+            temp_tweet_ids = list(tweet_ids_config.keys())
+            tweet_ids_config = {'current_ix': 0, 'tweet_ids': temp_tweet_ids}
+                
+        total = len(tweet_ids_config['tweet_ids'][current_ix:])
+        current_limit = min(current_ix+max_range, total-1)
+        ix = int(current_ix)
+        tweet_id_chuncks = []
+        while ix < total:
+            tweet_id_chuncks.append(tweet_ids_config['tweet_ids'][ix:current_limit])
+            ix += max_range
+            current_limit = min(ix+max_range, total-1)
+        
+        print('current_ix: {}'.format(current_ix))
+        print('tweet_id_chuncks: {}'.format(len(tweet_id_chuncks)))
+        
+        
+        
+        
+        for tweet_ids in tweet_id_chuncks:
+            try:
+                twitterCralwer = TwitterCrawler(app_key, app_secret, oauth_token, oauth_token_secret, url, uname, password, selected_fields=selected_fields)
+                twitterCralwer.lookup_tweets_by_ids(tweet_ids)
+                current_ix += len(tweet_ids)
+
+            except Exception as exc:
+                logger.error(exc)
+                #logger.error(full_stack())
+                pass
+
+            tweet_ids_config['current_ix'] = current_ix
+            
+            with open(os.path.abspath(ids_file), 'w') as tweet_ids_config_rf:
+                json.dump(tweet_ids_config, tweet_ids_config_rf,ensure_ascii=False)
+
+            logger.info('COMPLETED -> (current_ix: [%d/%d])'%(current_ix, total))
+            logger.info('PAUSE %ds to CONTINUE...'%WAIT_TIME)
+            time.sleep(WAIT_TIME)
+        else:
+            logger.info('[tweets_by_ids] ALL COMPLETED')
+        print('There')
+    
+        
 def update_log_excption(command, exc):
     if (command == 'search'):
         update_log(crawler_log, exc)
@@ -278,6 +350,8 @@ if __name__== "__main__":
                         collect_timeline_by_screen_name(config, args.url, args.uname, args.password, screen_name_file=args.terms_file, selected_fields = args.selected_fields, key_turn=key_turn)
                     elif (args.command == 'get_timelines_ids'):
                         collect_timeline_by_id(config, args.url, args.uname, args.password, ids_file=args.terms_file, selected_fields = args.selected_fields, key_turn=key_turn)
+                    elif (args.command == 'tweets_by_ids'):
+                        collect_tweets_by_ids(config, args.url, args.uname, args.password, ids_file=args.terms_file, selected_fields = args.selected_fields, key_turn=key_turn)
                     else:
                         raise Exception("command not found!")
                 except Exception as exc:

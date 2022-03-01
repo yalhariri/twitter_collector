@@ -31,7 +31,7 @@ logger.addHandler(file_handler)
 
 class TwitterCrawler(twython.Twython):
     items = []
-    def __init__(self, APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET, url, uname, password, selected_fields = False, file_name_output = 'output_data'):
+    def __init__(self, APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET, url, uname, password, selected_fields = False, file_name_output = '../output_data'):
         if url != None and uname != None and password != None:
             self.solr = pysolr.Solr(url, auth=(uname,password), timeout=20)
         else:
@@ -283,6 +283,39 @@ class TwitterCrawler(twython.Twython):
         logger.info("[%s] total tweets: %d; since_id: [%d]"%(screen_name, cnt, since_id))
         return current_since_id, False
 
+    def lookup_tweets_by_ids(self, tweet_ids=[]):
+
+        if not tweet_ids:
+            raise Exception("/statuses/lookup: tweet_ids cannot be None")
+
+        if len(tweet_ids)>100:
+            raise Exception("/statuses/lookup: tweet_ids cannot have more than 100 elements")
+
+        now=datetime.datetime.now()
+
+        if not os.path.exists(self.file_name_output):
+            os.makedirs(self.file_name_output)
+        cnt = 0
+        try:
+
+            tweets = self.lookup_status(id=list(tweet_ids), tweet_mode="extended")
+            cnt = len(tweets)
+            if (cnt > 0):
+                for tweet in tweets:
+                    filename = os.path.abspath('%s/%s.json'%(self.file_name_output, now.strftime('%Y%m%d')))
+                    with open(filename, 'a+', newline='', encoding='utf-8') as f:
+                        f.write('%s\n'%json.dumps(tweet))
+
+
+        except twython.exceptions.TwythonRateLimitError:
+            self.rate_limit_error_occured('statuses', '/statuses/lookup')
+        except Exception as exc:
+            time.sleep(10)
+            logger.error("exception: %s; when fetching [%s->%s]"%(exc, tweet_ids[0], tweet_ids[-1]))
+
+        logger.info("total tweets: %s; [%s->%s]"%(cnt, tweet_ids[0], tweet_ids[-1]))
+    
+    
     def fetch_user_timeline_by_id(self, account_id = None, since_id = 1, include_rts=True, solr_en=False):
         
         if not account_id:
@@ -359,7 +392,8 @@ class TwitterCrawler(twython.Twython):
                     return since_id, True # REMOVE the user from the list of track
 
         logger.info("[%s] total tweets: %d; since_id: [%d]"%(account_id, cnt, since_id))
-        return current_since_id, False
+        return current_since_id, False    
+        
 class TwitterStreamer(twython.TwythonStreamer):
     items = []
     def __init__(self, APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET, url, uname, password, selected_fields=False, file_name_output = 'output_data'):
