@@ -11,7 +11,6 @@ import re
 import nltk
 import requests
 tokenizer = nltk.TweetTokenizer()
-import subprocess
 import urllib.parse
 from urllib.parse import urlparse
 import os
@@ -75,7 +74,7 @@ def load_api_keys(keys="keys", index=0):
         df = pd.read_csv(keys,sep=',')
         if not df.empty:
             for item in df.iterrows():
-                if item[0] % 2 == index:
+                #if item[0] % len(df) == index:
                     api_keys["apikeys"][item[0]] = dict(item[1])
     except Exception as exp:
         print('error while loading API keys... ' + str(exp))
