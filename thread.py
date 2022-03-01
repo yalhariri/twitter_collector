@@ -57,11 +57,7 @@ class Tweets_Indexer(threading.Thread):
             file_name = 'solr_'+self.core+'.json'
             missed_data_written = 0
             Error_occured = False
-            #sys.exit(-1)
-            #if self.selected_fields:
             tweets_list = [tweets[k] for k in tweets.keys()]
-            #else:
-            #    tweets_list = tweets
             try:
                 for item in tweets_list:
                     if "_version_" in item.keys():

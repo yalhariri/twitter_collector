@@ -233,8 +233,8 @@ def get_friends(config, url, uname, password, screen_name_config_filepath=None, 
     api_keys = list(config['apikeys'].values())[key_turn]
     call = '/friends/list'
     screen_name_config = {}
-    print('screen_name_config_filepath:',os.path.abspath('./crawler/.config/'+screen_name_config_filepath))
-    with open(os.path.abspath('./crawler/.config/'+screen_name_config_filepath), 'r') as screen_name_config_rf:
+    print('screen_name_config_filepath:',os.path.abspath(config_folder+screen_name_config_filepath))
+    with open(os.path.abspath(config_folder+screen_name_config_filepath), 'r') as screen_name_config_rf:
         screen_name_config = json.load(screen_name_config_rf)
     
     all_items = len(screen_name_config['users'])
@@ -256,7 +256,7 @@ def get_friends(config, url, uname, password, screen_name_config_filepath=None, 
 
         screen_name_config['current_ix'] = current_ix
         
-        with open(os.path.abspath('./crawler/.config/'+screen_name_config_filepath), 'w') as screen_name_config_rf:
+        with open(os.path.abspath(config_folder+screen_name_config_filepath), 'w') as screen_name_config_rf:
             json.dump(screen_name_config, screen_name_config_rf,ensure_ascii=False)
 
         update_log(crawler_log,str('COMPLETED -> (current_ix: [%s/%d])'%(current_ix, total)))

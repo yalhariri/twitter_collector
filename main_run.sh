@@ -24,4 +24,4 @@
 #time lines crawler
 #python3 main_run.py -cmd get_timelines -solr false -sf false -u solr_admin -p admin_2018
 
-python3 twitter_crawler.py -cmd search -tf terms -solr false -sf false
+python3 twitter_streamer.py -c ../.config/keys  -cmd terms -tf terms -solr false -sf false
