@@ -21,11 +21,11 @@ from datetime import datetime
 Make sure to set the following configurations:
 
 """
-data_path = "./crawled_data/"
-OUTPUT_FOLDER = "./processed_data/"
+data_path = "../crawled_data/"
+OUTPUT_FOLDER = "../processed_data/"
 file_name = OUTPUT_FOLDER+'data_processed.csv'
 file_name_english = OUTPUT_FOLDER+'data_processed_english.csv'
-keys = '../.config/keys'
+keys = '../config/keys'
 lang_model = fasttext.load_model("../lid.176.bin")
 
 """
@@ -36,7 +36,8 @@ if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)
 
     
-tweets_files = [join(data_path, f) for f in listdir(data_path) if isfile(join(data_path, f))]
+tweets_files = [join(data_path, f) for f in listdir(data_path) if isfile(join(data_path, f)) and f >= "output_data02-08-00" and f < "output_data03-01-00"]
+tweets_files.sort()
 
 
 language_dict = {'af':'afrikaans','sq':'albanian','am':'amharic','ar':'arabic','arz':'arabic','an':'aragonese','hy':'armenian','as':'assamese','av':'avaric','az':'azerbaijani','ba':'bashkir','eu':'basque','be':'belarusian','bn':'bengali','bh':'bihari','bs':'bosnian','br':'breton','bg':'bulgarian','my':'burmese','ca':'catalan','ce':'chechen','zh':'chinese','cv':'chuvash','kw':'cornish','co':'corsican','hr':'croatian','cs':'czech','da':'danish','dv':'divehi','nl':'dutch','en':'english','eo':'esperanto','et':'estonian','fi':'finnish','fr':'french','gl':'galician','ka':'georgian','de':'german','el':'greek','gn':'guarani','gu':'gujarati','ht':'haitian','he':'hebrew','hi':'hindi','hu':'hungarian','ia':'interlingua','id':'indonesian','ie':'interlingue','ga':'irish','io':'ido','is':'icelandic','it':'italian','ja':'japanese','jv':'javanese','kn':'kannada','kk':'kazakh','km':'khmer','ky':'kirghiz','kv':'komi','ko':'korean','ku':'kurdish','la':'latin','lb':'luxembourgish','li':'limburgan','lo':'lao','lt':'lithuanian','lv':'latvian','gv':'manx','mk':'macedonian','mg':'malagasy','ms':'malay','ml':'malayalam','mt':'maltese','mr':'marathi','mn':'mongolian','ne':'nepali','nn':'norwegian','no':'norwegian','oc':'occitan','or':'oriya','os':'ossetian','pa':'punjabi','fa':'persian','pl':'polish','ps':'pashto','pt':'portuguese','qu':'quechua','rm':'romansh','ro':'romanian','ru':'russian','sa':'sanskrit','sc':'sardinian','sd':'sindhi','sr':'serbian','gd':'gaelic','si':'sinhala','sk':'slovak','sl':'slovenian','so':'somali','es':'spanish','su':'sundanese','sw':'swahili','sv':'swedish','ta':'tamil','te':'telugu','tg':'tajik','th':'thai','bo':'tibetan','tk':'turkmen','tl':'tagalog','tr':'turkish','tt':'tatar','ug':'uyghur','uk':'ukrainian','ur':'urdu','uz':'uzbek','vi':'vietnamese','wa':'walloon','cy':'welsh','fy':'frisian','yi':'yiddish','yo':'yoruba', 'lang':'english'}
@@ -180,17 +181,31 @@ def get_tweet_contents(tweet):
         
     tweet_n_obj = dict()
     
+    tweet_n_obj['id'] = tweet_obj['id']
+    tweet_n_obj['id_str'] = '\'' + str(tweet_obj['id'])
+    tweet_n_obj['created_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.strptime(tweet_obj["created_at"],'%a %b %d %H:%M:%S +0000 %Y'))
+    tweet_n_obj['user_screen_name'] = tweet_obj["user"]["screen_name"]
+    tweet_n_obj['user_name'] = tweet_obj["user"]["name"]
+    
+    full_text = ""
+    if 'extended_tweet' in tweet_obj.keys():
+        tweet_obj['full_text'] = tweet_obj['extended_tweet']['full_text']
+        tweet_obj['text'] = tweet_obj['extended_tweet']['full_text']
+    if 'full_text' in tweet_obj.keys():
+        full_text = tweet_obj['full_text']
+    elif 'text' in tweet_obj.keys():
+        full_text = tweet_obj['text']
+    tweet_n_obj['full_text'] = re.sub("[\n]+"," ",re.sub("[\r\n]+"," ",full_text.strip()))
+    tweet_n_obj['language'] = get_language(tweet_n_obj['full_text'])
+    if original:
+        tweet_n_obj["original"] = original
+    
     tweet_n_obj['attr_quote_tweets'] = []
     tweet_n_obj['attr_quote_times'] = []
     tweet_n_obj['attr_quoters'] = []
     tweet_n_obj['quote_count_i'] = 0
     tweet_n_obj['attr_retweet_times'] = []
     
-    tweet_n_obj['id'] = tweet_obj['id']
-    tweet_n_obj['id_str'] = '\'' + str(tweet_obj['id'])
-    tweet_n_obj['created_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.strptime(tweet_obj["created_at"],'%a %b %d %H:%M:%S +0000 %Y'))
-    tweet_n_obj['user_screen_name'] = tweet_obj["user"]["screen_name"]
-    tweet_n_obj['user_name'] = tweet_obj["user"]["name"]
     tweet_n_obj['user_id'] = tweet_obj["user"]["id"]
     tweet_n_obj['users_followers_count'] = tweet_obj["user"]["followers_count"]
     tweet_n_obj['users_friends_count'] = tweet_obj["user"]["friends_count"]
@@ -200,6 +215,7 @@ def get_tweet_contents(tweet):
         tweet_n_obj['reply_to_id_str'] = "'" + str(tweet_n_obj['reply_to_id'])
     if 'quoted_status_id' in tweet_obj.keys():
         tweet_n_obj['quotation_id'] = tweet_obj["quoted_status_id"]
+        tweet_n_obj['quotation_id_str'] = "'" + str(tweet_obj["quoted_status_id"])
         if "quoted_status" in tweet_obj.keys():
             if "text" in tweet_obj["quoted_status"]:
                 tweet_n_obj['quotation_text'] = tweet_obj["quoted_status"]['text']
@@ -228,14 +244,6 @@ def get_tweet_contents(tweet):
         tweet_n_obj['users_description'] = ''
     else:
         tweet_n_obj['users_description'] = re.sub("[\n]+"," ",re.sub("[\r\n]+"," ",tweet_obj["user"]["description"]))
-    full_text = ""
-    if 'extended_tweet' in tweet_obj.keys():
-        tweet_obj['full_text'] = tweet_obj['extended_tweet']['full_text']
-        tweet_obj['text'] = tweet_obj['extended_tweet']['full_text']
-    if 'full_text' in tweet_obj.keys():
-        full_text = tweet_obj['full_text']
-    elif 'text' in tweet_obj.keys():
-        full_text = tweet_obj['text']
     
     tweet_n_obj['retweeters'] = retweeter
     tweet_n_obj['retweets_ids'] = retweets_ids
@@ -244,8 +252,6 @@ def get_tweet_contents(tweet):
         tweet_n_obj['attr_retweet_times'] = [retweeter[0] + ' ' + retweet_time]
     else:
         tweet_n_obj['original_b'] = True
-    tweet_n_obj['full_text'] = re.sub("[\n]+"," ",re.sub("[\r\n]+"," ",full_text.strip()))
-    tweet_n_obj['language'] = get_language(tweet_n_obj['full_text'])
     tweet_n_obj['hashtags'] = [x for x in tokenizer.tokenize(re.sub("#"," #",full_text.strip())) if x.startswith('#')]
     tweet_n_obj['mentions'] = [x for x in tokenizer.tokenize(re.sub("@"," @",full_text.strip())) if x.startswith('@')]
     tweet_n_obj['platform'] = get_platform(tweet['source']) if 'source' in tweet.keys() else get_platform()
@@ -255,13 +261,15 @@ def get_tweet_contents(tweet):
     tweet_n_obj['urls'] = list(set(tweet_n_obj['urls']))
     
     tweet_n_obj['media'] = get_media_from_object(tweet_obj)
-    
-    tweet_n_obj["original"] = original
     return tweet_n_obj
 
 
 
 combined_tweets_dict2 = dict()
+from os.path import exists
+if exists (OUTPUT_FOLDER+"combined_tweets_dict2"):
+    with open (OUTPUT_FOLDER+"combined_tweets_dict2", "r", encoding="utf-8") as f_in:
+        combined_tweets_dict2 = json.loads(f_in.readline())
 
 def get_tweets_from_json(file_name):
     temp_dict = dict()
@@ -276,13 +284,18 @@ def get_tweets_from_json(file_name):
                     temp_dict[object_temp['id']]['retweeters'] = object_temp['retweeters']
                 else:
                     if object_temp['retweeters'] not in temp_dict[object_temp['id']]['retweeters']:
-                        temp_dict[object_temp['id']]['retweeters'].append(object_temp['retweeters'])
+                        temp_dict[object_temp['id']]['retweeters'].extend(object_temp['retweeters'])
+                        temp_dict[object_temp['id']]['retweeters'] = list(set(temp_dict[object_temp['id']]['retweeters']))
 
                 if 'retweets_ids' not in temp_dict[object_temp['id']].keys() and 'retweets_ids' in object_temp.keys():
                     temp_dict[object_temp['id']]['retweets_ids'] = object_temp['retweets_ids']
                 elif 'retweets_ids' in object_temp.keys():
                     if object_temp['retweets_ids'] not in temp_dict[object_temp['id']]['retweets_ids']:
-                        temp_dict[object_temp['id']]['retweets_ids'].append(object_temp['retweets_ids'])
+                        temp_dict[object_temp['id']]['retweets_ids'].extend(object_temp['retweets_ids'])
+                        temp_dict[object_temp['id']]['retweets_ids'] = list(set(temp_dict[object_temp['id']]['retweets_ids']))
+                temp_dict[object_temp['id']]["retweet_count"] = object_temp["retweet_count"]
+                temp_dict[object_temp['id']]["favorite_count"] = object_temp["favorite_count"]
+
     return temp_dict
 
 def extract_tweets_contents(tweets_file=''):
@@ -363,7 +376,8 @@ else:
 
     print('processing reply tweets of {} done!'.format(len(list(replies_to_dict.keys()))))
 
-
+    with open (OUTPUT_FOLDER+"combined_tweets_dict2", "w", encoding="utf-8") as f_out:
+        json.dump(combined_tweets_dict2, f_out, ensure_ascii=False)
     included_tweets_df = pd.DataFrame.from_dict(combined_tweets_dict2, orient='index')
     included_tweets_df.to_csv(file_name, mode='w', encoding='utf-8', header=True)
     included_tweets_df[included_tweets_df['language'] == 'english'].to_csv(file_name_english, mode='w', encoding='utf-8', header=True)
