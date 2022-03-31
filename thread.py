@@ -12,7 +12,6 @@ import re
 import nltk
 import random
 tokenizer = nltk.TweetTokenizer()
-import fasttext
 import requests
 import os
 from os import path, listdir, remove
@@ -26,10 +25,7 @@ import datetime
 
 
 config_folder = "./../.config/"
-lang_detect_file = config_folder+"lang_detect"
 current_conf = ''
-with open(lang_detect_file, 'r') as fp:
-    current_conf = json.load(fp)
 
 class Tweets_Indexer(threading.Thread):
     def __init__(self, tweets, solr, selected_fields, file_name_output, lock, core=None, solr_active=True): #TODO: in Quds server make solr_active=False
@@ -85,7 +81,7 @@ class Tweets_Indexer(threading.Thread):
         else:
             logger.info('solr not activated.')
         try:
-            self.write_data_to_file(tweets, folder='crawled_data')
+            self.write_data_to_file(tweets, folder='')
             logger.info('Data has been written in crawled_data.')
         except Exception as exp:
             logger.warning('Exception at write data to file! ' + exp)
@@ -99,13 +95,17 @@ class Tweets_Indexer(threading.Thread):
             file_name (str): the file name in which the data will be writen to.
             folder (str): the folder in which the file will be written to.
         """
-        if not path.exists('../'+folder):
-            os.mkdir('../'+folder)
         
         now = datetime.datetime.now()
         nows = now.strftime("%m-%d-%H")
-        out_put_file = folder + '/' + self.file_name_output + str(nows)
-        with open('../'+out_put_file,'a+',encoding='utf-8') as fout:
+
+        day_output_folder = os.path.abspath('%s/%s/%s'%(self.file_name_output, folder, now.strftime('%Y')))
+        if not os.path.exists(day_output_folder):
+            os.makedirs(day_output_folder)
+
+        out_put_file =  os.path.abspath('%s/%s'%(day_output_folder, str(nows)))
+        
+        with open(out_put_file,'a+',encoding='utf-8') as fout:
             for k in tweets.keys():
                 fout.write('%s\n'%json.dumps(tweets[k], ensure_ascii=False))
         
@@ -117,7 +117,7 @@ class Tweets_Indexer(threading.Thread):
             
         else:
             draft_tweets  = {tweet['id']: tweet for tweet in self.tweets}
-            self.write_data_to_file(draft_tweets, folder='crawled_data')
+            self.write_data_to_file(draft_tweets, folder='')
 
 
 class TimedRotatingFileHandler(_TimedRotatingFileHandler):
@@ -171,11 +171,6 @@ formatter    = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(mes
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.setLevel(logging.INFO)
-file_name = current_conf['file']
-lang_model = fasttext.load_model(file_name)
-language_dict = {'af':'afrikaans','sq':'albanian','am':'amharic','ar':'arabic','arz':'arabic','an':'aragonese','hy':'armenian','as':'assamese','av':'avaric','az':'azerbaijani','ba':'bashkir','eu':'basque','be':'belarusian','bn':'bengali','bh':'bihari','bs':'bosnian','br':'breton','bg':'bulgarian','my':'burmese','ca':'catalan','ce':'chechen','zh':'chinese','cv':'chuvash','kw':'cornish','co':'corsican','hr':'croatian','cs':'czech','da':'danish','dv':'divehi','nl':'dutch','en':'english','eo':'esperanto','et':'estonian','fi':'finnish','fr':'french','gl':'galician','ka':'georgian','de':'german','el':'greek','gn':'guarani','gu':'gujarati','ht':'haitian','he':'hebrew','hi':'hindi','hu':'hungarian','ia':'interlingua','id':'indonesian','ie':'interlingue','ga':'irish','io':'ido','is':'icelandic','it':'italian','ja':'japanese','jv':'javanese','kn':'kannada','kk':'kazakh','km':'khmer','ky':'kirghiz','kv':'komi','ko':'korean','ku':'kurdish','la':'latin','lb':'luxembourgish','li':'limburgan','lo':'lao','lt':'lithuanian','lv':'latvian','gv':'manx','mk':'macedonian','mg':'malagasy','ms':'malay','ml':'malayalam','mt':'maltese','mr':'marathi','mn':'mongolian','ne':'nepali','nn':'norwegian','no':'norwegian','oc':'occitan','or':'oriya','os':'ossetian','pa':'punjabi','fa':'persian','pl':'polish','ps':'pashto','pt':'portuguese','qu':'quechua','rm':'romansh','ro':'romanian','ru':'russian','sa':'sanskrit','sc':'sardinian','sd':'sindhi','sr':'serbian','gd':'gaelic','si':'sinhala','sk':'slovak','sl':'slovenian','so':'somali','es':'spanish','su':'sundanese','sw':'swahili','sv':'swedish','ta':'tamil','te':'telugu','tg':'tajik','th':'thai','bo':'tibetan','tk':'turkmen','tl':'tagalog','tr':'turkish','tt':'tatar','ug':'uyghur','uk':'ukrainian','ur':'urdu','uz':'uzbek','vi':'vietnamese','wa':'walloon','cy':'welsh','fy':'frisian','yi':'yiddish','yo':'yoruba', 'lang':'english'}
-language_dict_inv = {"afrikaans":"af","albanian":"sq","amharic":"am","arabic":"ar","aragonese":"an","armenian":"hy","assamese":"as","avaric":"av","azerbaijani":"az","bashkir":"ba","basque":"eu","belarusian":"be","bengali":"bn","bihari":"bh","bosnian":"bs","breton":"br","bulgarian":"bg","burmese":"my","catalan":"ca","chechen":"ce","chinese":"zh","chuvash":"cv","cornish":"kw","corsican":"co","croatian":"hr","czech":"cs","danish":"da","divehi":"dv","dutch":"nl","english":"en","esperanto":"eo","estonian":"et","finnish":"fi","french":"fr","galician":"gl","georgian":"ka","german":"de","greek":"el","guarani":"gn","gujarati":"gu","haitian":"ht","hebrew":"he","hindi":"hi","hungarian":"hu","interlingua":"ia","indonesian":"id","interlingue":"ie","irish":"ga","ido":"io","icelandic":"is","italian":"it","japanese":"ja","javanese":"jv","kannada":"kn","kazakh":"kk","khmer":"km","kirghiz":"ky","komi":"kv","korean":"ko","kurdish":"ku","latin":"la","luxembourgish":"lb","limburgan":"li","lao":"lo","lithuanian":"lt","latvian":"lv","manx":"gv","macedonian":"mk","malagasy":"mg","malay":"ms","malayalam":"ml","maltese":"mt","marathi":"mr","mongolian":"mn","nepali":"ne","norwegian":"nn","occitan":"oc","oriya":"or","ossetian":"os","punjabi":"pa","persian":"fa","polish":"pl","pashto":"ps","portuguese":"pt","quechua":"qu","romansh":"rm","romanian":"ro","russian":"ru","sanskrit":"sa","sardinian":"sc","sindhi":"sd","serbian":"sr","gaelic":"gd","sinhala":"si","slovak":"sk","slovenian":"sl","somali":"so","spanish":"es","sundanese":"su","swahili":"sw","swedish":"sv","tamil":"ta","telugu":"te","tajik":"tg","thai":"th","tibetan":"bo","turkmen":"tk","tagalog":"tl","turkish":"tr","tatar":"tt","uyghur":"ug","ukrainian":"uk","urdu":"ur","uzbek":"uz","vietnamese":"vi","walloon":"wa","welsh":"cy","frisian":"fy","yiddish":"yi","yoruba":"yo"}
-
 
 def get_sentiments(tweets):
     """A function to access sentiment analysis service.
@@ -194,7 +189,6 @@ def get_sentiments(tweets):
         'sentiment_distribution' : a list that has the distribution of the three sentiments (the highest would be at the index of the selected sentiment)
     """
     headers = {'content-type': 'application/json; charset=utf-8'}
-    #url = 'http://127.0.0.1:10001/v1.0/sentiment' #Huawei Project
     url = 'http://127.0.0.1:7777/api/predict' #Other Project
     data = json.dumps(tweets, ensure_ascii=False)
     rs = -1
@@ -283,13 +277,13 @@ def extract_tweets_info(tweets):
     feature = []
     for tweet in tweets:
         item = get_tweet_contents(tweet)
-        item['language'] = get_language(item['full_text'])
+        item['language'] = tweet['lang']
         #print(item['language'])
         draft_tweets[item['id']] = item
         loc_dict[tweet['id']] = {'id': tweet['id'], 'user': tweet['user'], 'geo': tweet['geo'] , 'coordinates': tweet['coordinates'] , 'place': tweet['place'] , 'language': item['language'] }
         try:
             #sentiment[tweet["id"]] = {'id': tweet['id'], "full_text": item["full_text"], "language":item['language'][0][0]}
-            sentiment[tweet["id"]] = {'id': tweet['id'], "full_text": item["full_text"], "language":language_dict_inv[item['language'][0][0]]}
+            sentiment[tweet["id"]] = {'id': tweet['id'], "full_text": item["full_text"], "language":item['language']}
         except Exception:
             sentiment[tweet["id"]] = {'id': tweet['id'], "full_text": item["full_text"], "language":'en'}
             pass
@@ -329,44 +323,6 @@ def extract_tweets_info(tweets):
             draft_tweets[k]['topic'] = features[k]['topic']
             draft_tweets[k]['features'] = features[k]['features']
     return draft_tweets
-
-def get_language(tweet_text):
-    """function to extract the language of the passed string.
-    It is based on fasttext language identification and uses the libraries (fasttext, re) in python.
-    Proceudre:
-        1- remove hashtags, mentions and urls
-        2- remove non-alpha characters
-        3- predict the language
-        4- in case of errors, return english with 0 confidence.
-    Args:
-        tweet_text (str): The string that you need to find its language.
-
-    Returns:
-        List: List of lists that contains the identified language with its considence. examples: [['english',0.9]] or [['english',0.6],['spanish',0.3]]
-    """
-    detect_lang = []
-    try:
-        tweet_text = re.sub('[@#][^ ]+','',re.sub('http[s]:[^ ]+','',tweet_text))
-        tweet_text = re.sub('[ًٌٍَُِّْ]+','',tweet_text)
-        tmp = ' '.join([x for x in tweet_text.split() if str.isalpha(x) and not x.startswith('#') and not x.startswith('@')])
-        if len(tmp.split()) > 3:
-            tweet_text = tmp    #this to avoid removing Ch/Ja/Ta strings
-        lang = lang_model.predict(tweet_text,1,0.2)
-        l = lang[0]
-        p = lang[1]
-        for i in range(len(l)):
-            a = str(l[i]).replace('label','').replace('_','')
-            if a in language_dict.keys():
-                a = language_dict[a] 
-                b = p[i]
-                detect_lang.append([a, b])
-    except Exception as exp:
-        logger.warning('Identifying language failed. Error code: ' + str(exp))
-        detect_lang = [['lang', 0.0]] #if exception occured, set langauge to lang with 0.0 confidence. (traceable for further works)
-        pass
-    if len(detect_lang) <= 0:
-        detect_lang = [['lang', 0.0]]
-    return detect_lang
 
 def get_urls_from_object(tweet_obj):
     """Extract urls from a tweet object

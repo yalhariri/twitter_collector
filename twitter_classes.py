@@ -20,7 +20,7 @@ lock = threading.Lock()
 streamer_log='./../.log/streamer.log'
 crawler_log='./../.log/crawler.log'
 cache_folder="./../.cache/"
-status_file = cache_folder+"status"
+status_file = cache_folder+"status_crawler"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -31,7 +31,7 @@ logger.addHandler(file_handler)
 
 class TwitterCrawler(twython.Twython):
     items = []
-    def __init__(self, APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET, url, uname, password, selected_fields = False, file_name_output = '../output_data'):
+    def __init__(self, APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET, url, uname, password, selected_fields = False, file_name_output = '../data/crawler/'):
         if url != None and uname != None and password != None:
             self.solr = pysolr.Solr(url, auth=(uname,password), timeout=20)
         else:
@@ -41,31 +41,7 @@ class TwitterCrawler(twython.Twython):
         self.selected_fields = selected_fields
         self.file_name_output = file_name_output
         super(TwitterCrawler, self).__init__(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
-        '''
-        api_keys = copy.copy(kwargs.pop('api_keys', None))
-
-        if not api_keys:
-            raise Exception('api keys is missing')
-
-        self.api_keys= copy.copy(api_keys)
-
-        oauth2 = kwargs.pop('oauth2', True)
-
-        if oauth2:
-            api_keys.pop('oauth_token')
-            api_keys.pop('oauth_token_secret')
-            twitter = twython.Twython(api_keys['app_key'], api_keys['app_secret'], oauth_version=2)
-            access_token = twitter.obtain_access_token()
-            kwargs['access_token'] = access_token
-            api_keys.pop('app_secret')
-
-        kwargs.update(api_keys)
-        url = kwargs.pop('url', None)
-        uname = kwargs.pop('uname', None)
-        password = kwargs.pop('password', None)
-        solr = pysolr.Solr(url, auth=(uname,password), timeout=20)
-        super(TwitterCrawler, self).__init__(*args, **kwargs)
-        '''
+        
         
     def write_items(self, tweets):
         print('write items! ', len(tweets) , '\t' , len(self.items))
@@ -132,8 +108,6 @@ class TwitterCrawler(twython.Twython):
                     for t in self.threads:
                         t.join()
                     print('Done, bye!')
-                    if self.solr != None:
-                        self.solr.commit()
                     logger.info('Done, now closed!')
                     os._exit(0)
 
@@ -157,8 +131,8 @@ class TwitterCrawler(twython.Twython):
         '''
         if not screen_name:
             raise Exception("user_relationship: screen_name cannot be None")
-
-        output_folder = '.'+call
+        
+        output_folder = '../data/'+call
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
             
@@ -208,10 +182,11 @@ class TwitterCrawler(twython.Twython):
 
         if not screen_name:
             raise Exception("user_timeline: screen_name cannot be None")
-
+        
+        
         now=datetime.datetime.now()
         day_output_folder = os.path.abspath('../data/timelines/%s'%(now.strftime('%Y')))
-
+        
         if not os.path.exists(day_output_folder):
             os.makedirs(day_output_folder)
 
@@ -396,7 +371,7 @@ class TwitterCrawler(twython.Twython):
         
 class TwitterStreamer(twython.TwythonStreamer):
     items = []
-    def __init__(self, APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET, url, uname, password, selected_fields=False, file_name_output = 'output_data'):
+    def __init__(self, APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET, url, uname, password, selected_fields=False, file_name_output = '../data/streamer/'):
         self.counter = 0
         self.error = 0
         self.uname = uname
@@ -410,14 +385,13 @@ class TwitterStreamer(twython.TwythonStreamer):
             self.solr = None
         
         self.threads = []
-        #print('streamer will start')
         super(TwitterStreamer, self).__init__(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
         
     
     def write_items(self, tweets):
         print('write items! ', len(tweets) , '\t' , len(self.items))
         logger.info(str.format('write items! ' + str(len(tweets)) + '\t' + str(len(self.items))))
-        global lock
+        global lock        
         thread = Tweets_Indexer(tweets, self.solr, self.selected_fields, self.file_name_output, lock)
         self.threads.append(thread)
         thread.start()
@@ -448,7 +422,6 @@ class TwitterStreamer(twython.TwythonStreamer):
             os._exit(0)
             
     def on_success(self, tweet):
-        #print('streamer success!')
         self.counter += 1
         if ('id' in tweet and 'created_at' in tweet and 'user' in tweet and ('text' in tweet or 'full_text' in tweet)):
             self.fill_items(tweet)

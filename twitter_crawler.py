@@ -276,7 +276,7 @@ def collect_tweets_by_ids(config, url, uname, password, ids_file, selected_field
             time.sleep(WAIT_TIME)
         else:
             logger.info('[tweets_by_ids] ALL COMPLETED')
-        print('There')
+        print('Finished')
     
         
 def update_log_excption(command, exc):
@@ -285,7 +285,7 @@ def update_log_excption(command, exc):
         
 
 if __name__== "__main__":
-    
+    print('Live')
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', help="config.json that contains twitter api keys;")
@@ -296,8 +296,6 @@ if __name__== "__main__":
     parser.add_argument('-url','--url', help="solr core to store the retreived tweets", default=None)
     parser.add_argument('-uname','--uname', default=None)
     parser.add_argument('-pswrd','--password', default=None)
-    
-    
     parser.add_argument('-wait','--wait_time', help="wait time to check available api keys", type=int, default=10)
     
     import time
