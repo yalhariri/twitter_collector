@@ -21,10 +21,18 @@ import subprocess
 tweets_list = [] 
 
 log_folder = './../.log/'
-config_folder = './../.config/'
 streamer_log=log_folder+'streamer'
 crawler_log=log_folder+'crawler'
 cache_folder="./../.cache/"
+config_folder = './../.config/'
+
+if not os.path.exists(log_folder):
+    os.makedirs(log_folder)
+if not os.path.exists(cache_folder):
+    os.makedirs(cache_folder)
+if not os.path.exists(config_folder):
+    os.makedirs(config_folder)
+   
 current_conf = ''
 
 
@@ -35,6 +43,7 @@ def update_log(file_name, updates):
         logging.write("%s%s"%(updates,'\n'))
 
 def write_running_status(status_file,status):
+    
     with open(status_file,'w') as f_out:
         f_out.write(status)
     return True
@@ -56,30 +65,28 @@ def load_api_keys(keys="keys", index=0):
     keys = config_folder + keys
     df = pd.DataFrame()
     api_keys = {"apikeys":dict()}
-    try:
-        df = pd.read_csv(keys,sep=',')
-        if not df.empty:
-            for item in df.iterrows():
-                #if item[0] % len(df) == index:
-                    api_keys["apikeys"][item[0]] = dict(item[1])
-    except Exception as exp:
-        print('error while loading API keys... ' + str(exp))
-        pass
+    if os.path.exists(keys):
+        try:
+            df = pd.read_csv(keys,sep=',')
+        except Exception as exp:
+            print('error while loading API keys... ' + str(exp))
+            pass
     return df
 
 def load_api_keys_dict(keys="keys", index=0):
     keys = config_folder + keys
     df = pd.DataFrame()
     api_keys = {"apikeys":dict()}
-    try:
-        df = pd.read_csv(keys,sep=',')
-        if not df.empty:
-            for item in df.iterrows():
-                #if item[0] % len(df) == index:
-                    api_keys["apikeys"][item[0]] = dict(item[1])
-    except Exception as exp:
-        print('error while loading API keys... ' + str(exp))
-        pass
+    if os.path.exists(keys):
+        try:
+            df = pd.read_csv(keys,sep=',')
+            if not df.empty:
+                for item in df.iterrows():
+                    #if item[0] % len(df) == index:
+                        api_keys["apikeys"][item[0]] = dict(item[1])
+        except Exception as exp:
+            print('error while loading API keys... ' + str(exp))
+            pass
     return api_keys
 
 def save_api_keys(df, keys="keys", index=0):
@@ -105,9 +112,10 @@ def get_search_dict(terms_file, since_id=1, geocode = None):
     '''
     terms_file = config_folder + terms_file
     terms_list = []
-    with open (terms_file, 'r') as f_in:
-        for line in f_in.readlines():
-            terms_list.append(line)
+    if os.path.exists(terms_file):
+        with open (terms_file, 'r') as f_in:
+            for line in f_in.readlines():
+                terms_list.append(line)
     import math
     x = math.ceil(len(terms_list) / 15)
     data_dict = {}
@@ -136,8 +144,9 @@ def get_screen_name_dict(screen_name_file, since_id=1, geocode = None):
     '''
     screen_name_file = config_folder + screen_name_file
     screen_names_dict = {}
-    with open (screen_name_file, 'r') as f_in:
-        screen_names_dict = json.load(f_in)
+    if os.path.exists(screen_name_file):
+        with open (screen_name_file, 'r') as f_in:
+            screen_names_dict = json.load(f_in)
     return screen_names_dict
     
 def get_ids_dict(ids_file, since_id=1, geocode = None):
@@ -155,8 +164,9 @@ def get_ids_dict(ids_file, since_id=1, geocode = None):
     ids_file = config_folder + ids_file
     
     ids_dict = {}
-    with open (ids_file, 'r') as f_in:
-        ids_dict = json.load(f_in)
+    if os.path.exists(ids_file):
+        with open (ids_file, 'r') as f_in:
+            ids_dict = json.load(f_in)
     return ids_dict
 
 def update_screen_name_file(screen_names_dict, screen_name_file):
@@ -193,11 +203,15 @@ def get_terms_list(terms_file):
     
     '''
     terms_file = config_folder + terms_file
+    if not os.path.exists(config_folder):
+        os.makedirs(config_folder)
     terms_list = []
-    with open (terms_file, 'r', encoding='utf-8') as f_in:
-        for line in f_in.readlines():
-            terms_list.append(line.strip())
+    if os.path.exists(terms_file):
+        with open (terms_file, 'r', encoding='utf-8') as f_in:
+            for line in f_in.readlines():
+                terms_list.append(line.strip())
     return terms_list
+    
 
 def update_terms_list(terms_list, terms_file):
     '''
@@ -212,6 +226,8 @@ def update_terms_list(terms_list, terms_file):
     since_id : int the id of the first tweet to consider in the search (default is 1).
     '''
     terms_file = config_folder + terms_file
+    if not os.path.exists(config_folder):
+        os.makedirs(config_folder)
     with open (terms_file, 'w', encoding='utf-8') as f_out:
         for item in terms_list:
             f_out.write('{}\r\n'.format(item))
